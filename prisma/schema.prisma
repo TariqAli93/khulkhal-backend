@@ -1,0 +1,95 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model users {
+  userId    Int      @id @default(autoincrement())
+  userName  String   @unique
+  password  String
+  phone     String   @unique
+  email     String   @unique
+  role      Role     @default(USER)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  orders    orders[]
+}
+
+model categories {
+  categoryId          Int                   @id @default(autoincrement())
+  categoryName        String                @unique
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  categories_products categories_products[]
+}
+
+model products {
+  productId           Int                   @id @default(autoincrement())
+  productName         String                @unique
+  productDescription  String                @db.VarChar(1000)
+  productPrice        Int
+  productImage        String
+  isVisible           Boolean               @default(true)
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  categories_products categories_products[]
+  order_items         order_items[]
+}
+
+model categories_products {
+  pcId       Int        @id @default(autoincrement())
+  idCategory Int
+  idProduct  Int
+  product    products   @relation(fields: [idProduct], references: [productId])
+  category   categories @relation(fields: [idCategory], references: [categoryId])
+}
+
+model orders {
+  orderId       Int           @id @default(autoincrement())
+  orderStatus   OrderStatus   @default(NEW)
+  user          users?        @relation(fields: [idUser], references: [userId])
+  idUser        Int?
+  province      String
+  district      String
+  closestPoint  String
+  customerName  String
+  customerPhone String
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  order_items   order_items[]
+}
+
+model order_items {
+  orderItemId Int       @id @default(autoincrement())
+  quantity    Int
+  order       orders?   @relation(fields: [idOrder], references: [orderId])
+  product     products? @relation(fields: [idProduct], references: [productId])
+  idOrder     Int?
+  idProduct   Int?
+  discount    Int       @default(0)
+  totalPrice  Int
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+enum OrderStatus {
+  NEW
+  ACCEPTED
+  CANCELLED
+  PENDING
+  DELIVERED
+}
+
+enum Role {
+  ADMIN
+  USER
+  MODERATOR
+}
